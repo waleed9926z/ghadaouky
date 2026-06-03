@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>غذاؤك</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0c10;--s:#13161e;--s2:#1c2030;--b:#252a38;--ac:#e8ff47;--ac2:#ff6b35;--ac3:#00d4aa;--tx:#f0f2f8;--mu:#7a8099;--rd:#ff4466}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+input,select,button,textarea{font-family:inherit}
+
+/* SETUP */
+#setup{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1.5rem;background:radial-gradient(ellipse 80% 60% at 50% 0%,#1a2040,var(--bg))}
+.card0{width:100%;max-width:460px;background:var(--s);border:1px solid var(--b);border-radius:22px;padding:2rem;position:relative;overflow:hidden}
+.card0::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--ac),var(--ac2),var(--ac3))}
+.logo{font-size:2rem;font-weight:700;margin-bottom:.2rem}.logo span{color:var(--ac)}
+.sub{color:var(--mu);font-size:.88rem;margin-bottom:1.75rem}
+.fg{margin-bottom:1.1rem}
+.fg label{display:block;font-size:.75rem;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.4rem}
+.fg input,.fg select{width:100%;background:var(--s2);border:1.5px solid var(--b);border-radius:11px;padding:.8rem .95rem;color:var(--tx);font-size:.97rem;outline:none;-webkit-appearance:none;appearance:none}
+.fg input:focus,.fg select:focus{border-color:var(--ac)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.btn-main{width:100%;background:var(--ac);color:#0a0c10;border:none;border-radius:12px;padding:.9rem;font-size:1rem;font-weight:700;cursor:pointer;margin-top:.75rem}
+.preview{background:var(--s2);border-radius:11px;padding:.9rem;margin-top:.9rem;display:none;text-align:center}
+.preview .n{font-size:1.9rem;font-weight:700;color:var(--ac)}
+.preview .l{color:var(--mu);font-size:.82rem}
+
+/* APP */
+#app{display:none}
+.hdr{background:var(--s);border-bottom:1px solid var(--b);padding:.9rem 1.25rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.hdr-logo{font-size:1.2rem;font-weight:700}.hdr-logo span{color:var(--ac)}
+.hdr-date{color:var(--mu);font-size:.75rem;margin-top:1px}
+.hdr-btns{display:flex;gap:.5rem}
+.btn-sm{background:none;border:1px solid var(--b);color:var(--mu);border-radius:8px;padding:.35rem .75rem;font-size:.73rem;cursor:pointer}
+.btn-sm.active{border-color:var(--ac);color:var(--ac)}
+.content{padding:1.25rem;max-width:860px;margin:0 auto}
+
+/* TABS */
+.tabs{display:flex;gap:.5rem;margin-bottom:1.25rem;overflow-x:auto;padding-bottom:.25rem}
+.tab{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:.5rem 1rem;font-size:.82rem;cursor:pointer;white-space:nowrap;color:var(--mu);flex-shrink:0}
+.tab.active{border-color:var(--ac);color:var(--ac);background:rgba(232,255,71,.06)}
+
+/* DASHBOARD */
+.dash{display:grid;grid-template-columns:auto 1fr;gap:1.25rem;margin-bottom:1.25rem;background:var(--s);border:1px solid var(--b);border-radius:18px;padding:1.25rem}
+.ring-w{position:relative;width:130px;height:130px;flex-shrink:0}
+.ring-c{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.ring-n{font-size:1.3rem;font-weight:700;line-height:1}
+.ring-n.over{color:var(--rd)}
+.ring-l{font-size:.6rem;color:var(--mu);margin-top:2px}
+.ring-rem{font-size:.78rem;font-weight:700;color:var(--ac)}
+.macros{display:flex;flex-direction:column;justify-content:center;gap:.65rem}
+.mr-name{font-size:.68rem;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.22rem}
+.mr-track{height:5px;background:var(--s2);border-radius:99px;overflow:hidden;margin-bottom:.22rem}
+.mr-bar{height:100%;border-radius:99px;transition:width .5s ease;width:0%}
+.mr-vals{display:flex;justify-content:space-between;font-size:.68rem;color:var(--mu)}
+.mr-vals .got{color:var(--tx);font-weight:600}
+
+/* CARDS */
+.crd{background:var(--s);border:1px solid var(--b);border-radius:18px;padding:1.25rem;margin-bottom:1.25rem}
+.crd-title{font-size:.75rem;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.9px;margin-bottom:.9rem}
+.charts-g{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.ch-w{position:relative;height:170px}
+
+/* AI CTA */
+.ai-cta{display:flex;flex-direction:column;align-items:center;gap:.9rem;padding:.4rem 0}
+.ai-cta-txt{color:var(--mu);font-size:.88rem;text-align:center;line-height:1.6}
+.btn-ai{background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;border-radius:13px;padding:.85rem 1.75rem;color:#fff;font-size:.97rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.45rem}
+
+/* LOG */
+.log-empty{text-align:center;padding:2rem;color:var(--mu);font-size:.88rem}
+.log-item{display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;border-bottom:1px solid var(--b)}
+.log-item:last-child{border-bottom:none}
+.log-name{font-size:.88rem;font-weight:500}
+.log-mac{font-size:.7rem;color:var(--mu);margin-top:2px}
+.log-r{display:flex;align-items:center;gap:.6rem;flex-shrink:0}
+.log-cal{font-size:.9rem;font-weight:700;color:var(--ac)}
+.log-del{background:none;border:none;color:var(--mu);cursor:pointer;font-size:.95rem;padding:3px 5px;border-radius:5px}
+.aib{display:inline-block;background:rgba(124,58,237,.2);color:#a78bfa;font-size:.58rem;font-weight:700;padding:1px 4px;border-radius:4px;margin-left:3px}
+
+/* HISTORY */
+.hist-day{background:var(--s2);border-radius:12px;padding:1rem;margin-bottom:.75rem;border:1px solid var(--b)}
+.hist-day-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.hist-day-date{font-size:.85rem;font-weight:600}
+.hist-day-cal{font-size:.85rem;font-weight:700;color:var(--ac)}
+.hist-bars{display:flex;gap:.5rem;margin-top:.5rem}
+.hist-bar-w{flex:1}
+.hist-bar-lbl{font-size:.62rem;color:var(--mu);margin-bottom:.2rem}
+.hist-bar-track{height:4px;background:var(--b);border-radius:99px;overflow:hidden}
+.hist-bar-fill{height:100%;border-radius:99px}
+.hist-day-items{margin-top:.65rem;font-size:.78rem;color:var(--mu);line-height:1.8}
+.hist-toggle{background:none;border:none;color:var(--mu);font-size:.75rem;cursor:pointer;margin-top:.35rem;padding:0}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.overlay.on{display:flex}
+.mcrd{background:var(--s);border:1px solid var(--b);border-radius:22px 22px 0 0;padding:1.5rem 1.5rem 2.5rem;width:100%;max-width:580px;max-height:88vh;overflow-y:auto}
+.mhandle{width:38px;height:4px;background:var(--b);border-radius:99px;margin:0 auto 1.25rem}
+.mtitle{font-size:1.05rem;font-weight:700;margin-bottom:.2rem}
+.msub{color:var(--mu);font-size:.8rem;margin-bottom:1.1rem}
+.ai-ta{width:100%;background:var(--s2);border:1.5px solid var(--b);border-radius:11px;padding:.8rem .95rem;color:var(--tx);font-size:.93rem;resize:none;outline:none;min-height:88px}
+.ai-ta:focus{border-color:#7c3aed}
+.send-row{display:flex;gap:.65rem;margin-top:.65rem;margin-bottom:.9rem}
+.btn-send{flex:1;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;border-radius:11px;padding:.82rem;color:#fff;font-size:.93rem;font-weight:700;cursor:pointer}
+.btn-send:disabled{opacity:.45}
+.btn-cls{background:var(--s2);border:1px solid var(--b);border-radius:11px;padding:.82rem 1.1rem;color:var(--mu);cursor:pointer;font-size:.88rem}
+.spin-w{display:none;text-align:center;padding:1.25rem;color:var(--mu)}
+.spin{width:30px;height:30px;border:3px solid var(--b);border-top-color:#7c3aed;border-radius:50%;animation:sp .8s linear infinite;margin:0 auto .6rem}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ai-res{display:none}
+.ri{padding:.8rem .95rem;background:var(--s2);border-radius:10px;margin-bottom:.45rem;display:flex;align-items:center;gap:.65rem;border:1.5px solid transparent;cursor:pointer}
+.ri.sel{border-color:var(--ac);background:rgba(232,255,71,.04)}
+.chk{width:21px;height:21px;border:2px solid var(--b);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.72rem;color:transparent}
+.ri.sel .chk{background:var(--ac);border-color:var(--ac);color:#0a0c10}
+.btn-add{width:100%;background:var(--ac);color:#0a0c10;border:none;border-radius:12px;padding:.88rem;font-size:.97rem;font-weight:700;cursor:pointer;margin-top:.9rem;display:none}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.75rem;left:50%;transform:translateX(-50%);background:var(--s);border:1px solid var(--b);border-radius:11px;padding:.7rem 1.4rem;font-size:.82rem;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1}
+.toast.ok{border-color:var(--ac3)}
+.toast.er{border-color:var(--rd);color:var(--rd)}
+
+@media(max-width:560px){
+  .dash{grid-template-columns:1fr}.ring-w{margin:0 auto}
+  .charts-g{grid-template-columns:1fr}.content{padding:1rem}
+}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup">
+<div class="card0">
+  <div class="logo">غذا<span>ؤك</span></div>
+  <div class="sub">حاسب السعرات بقوة الـ AI</div>
+  <div class="row2">
+    <div class="fg"><label>العمر</label><input type="number" id="sage" placeholder="25" inputmode="numeric"/></div>
+    <div class="fg"><label>الجنس</label><select id="sgender"><option value="male">ذكر</option><option value="female">أنثى</option></select></div>
+  </div>
+  <div class="row2">
+    <div class="fg"><label>الطول (سم)</label><input type="number" id="sheight" placeholder="175" inputmode="numeric"/></div>
+    <div class="fg"><label>الوزن (كجم)</label><input type="number" id="sweight" placeholder="75" inputmode="numeric"/></div>
+  </div>
+  <div class="fg"><label>مستوى النشاط</label>
+    <select id="sact">
+      <option value="1.2">مستقر (مكتب)</option>
+      <option value="1.375">خفيف (1-3 أيام)</option>
+      <option value="1.55" selected>متوسط (3-5 أيام)</option>
+      <option value="1.725">عالي (6-7 أيام)</option>
+      <option value="1.9">شديد جداً</option>
+    </select>
+  </div>
+  <div class="fg"><label>الهدف</label>
+    <select id="sgoal">
+      <option value="deficit">خسارة وزن (−500 سعر)</option>
+      <option value="maintain" selected>الحفاظ على الوزن</option>
+      <option value="surplus">زيادة العضلات (+300 سعر)</option>
+    </select>
+  </div>
+  <div class="preview" id="prev"><div class="n" id="prevn">2000</div><div class="l">سعر حراري يومي موصى به</div></div>
+  <button class="btn-main" id="startBtn">ابدأ التتبع ←</button>
+</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="hdr">
+    <div><div class="hdr-logo">غذا<span>ؤك</span></div><div class="hdr-date" id="hdate"></div></div>
+    <div class="hdr-btns">
+      <button class="btn-sm" id="resetBtn">إعادة ضبط</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab active" id="tab-today" data-tab="today">اليوم</div>
+      <div class="tab" id="tab-history" data-tab="history">السجل 📅</div>
+    </div>
+
+    <!-- TODAY VIEW -->
+    <div id="view-today">
+      <div class="dash">
+        <div class="ring-w">
+          <canvas id="ringC" width="130" height="130"></canvas>
+          <div class="ring-c">
+            <div class="ring-n" id="ringN">0</div>
+            <div class="ring-l">متبقي<br><span class="ring-rem" id="ringR">0</span></div>
+          </div>
+        </div>
+        <div class="macros">
+          <div class="mr">
+            <div class="mr-name">بروتين</div>
+            <div class="mr-track"><div class="mr-bar" id="bP" style="background:#ff6b35"></div></div>
+            <div class="mr-vals"><span class="got" id="vP">0g</span><span id="tP">0g</span></div>
+          </div>
+          <div class="mr">
+            <div class="mr-name">كارب</div>
+            <div class="mr-track"><div class="mr-bar" id="bC" style="background:#e8ff47"></div></div>
+            <div class="mr-vals"><span class="got" id="vC">0g</span><span id="tC">0g</span></div>
+          </div>
+          <div class="mr">
+            <div class="mr-name">دهون</div>
+            <div class="mr-track"><div class="mr-bar" id="bF" style="background:#00d4aa"></div></div>
+            <div class="mr-vals"><span class="got" id="vF">0g</span><span id="tF">0g</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="crd">
+        <div class="crd-title">توزيع العناصر الغذائية</div>
+        <div class="charts-g">
+          <div class="ch-w"><canvas id="donut"></canvas></div>
+          <div class="ch-w"><canvas id="bars"></canvas></div>
+        </div>
+      </div>
+
+      <div class="crd">
+        <div class="crd-title">سجّل وجبتك</div>
+        <div class="ai-cta">
+          <div class="ai-cta-txt">قول للـ AI اللي اتكلته بالعامية<br>وهو يحسب السعرات ليك على طول</div>
+          <button class="btn-ai" id="aiBtn">🤖 سجّل بالـ AI</button>
+        </div>
+      </div>
+
+      <div class="crd">
+        <div class="crd-title">وجبات اليوم</div>
+        <div id="logEl"><div class="log-empty">لسه ماضفتش حاجة 🍽️</div></div>
+      </div>
+    </div>
+
+    <!-- HISTORY VIEW -->
+    <div id="view-history" style="display:none">
+      <div class="crd">
+        <div class="crd-title">سجل الأيام السابقة</div>
+        <div id="histEl"><div class="log-empty">لسه مفيش تاريخ 📅</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- AI MODAL -->
+<div class="overlay" id="modal">
+  <div class="mcrd">
+    <div class="mhandle"></div>
+    <div class="mtitle">🤖 سجّل وجبتك</div>
+    <div class="msub">اوصفلي اللي اكلته بالعامية، والـ AI هيحسب السعرات</div>
+    <textarea class="ai-ta" id="aiTxt" placeholder="مثلاً: اتغديت بطبق فول بزيت وليمون مع رغيفين عيش بلدي وشربت شاي باللبن"></textarea>
+    <div class="send-row">
+      <button class="btn-send" id="sendBtn">حلّل الوجبة 🔍</button>
+      <button class="btn-cls" id="closeBtn">إلغاء</button>
+    </div>
+    <div class="spin-w" id="spinW"><div class="spin"></div>بحسب السعرات...</div>
+    <div class="ai-res" id="aiRes">
+      <div class="crd-title" style="margin-bottom:.65rem">اختار اللي تضيفه</div>
+      <div id="resList"></div>
+      <button class="btn-add" id="addBtn">أضف المحدد ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+var OR_KEY = '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';
+
+function $id(id){ return document.getElementById(id); }
+
+function toast(msg, type){
+  var t=$id('toast'); t.textContent=msg;
+  t.className='toast '+(type||'ok')+' on';
+  setTimeout(function(){ t.className='toast'; },2800);
+}
+
+/* ── STORAGE ── */
+function sGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function sSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function sClear(){ try{ localStorage.clear(); }catch(e){} }
+
+function todayKey(){
+  var d=new Date();
+  return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+}
+
+/* ── STATE ── */
+var profile=null, log=[], aiItems=[];
+var rChart=null, dChart=null, bChart=null;
+
+/* ── CALC ── */
+function tdee(p){
+  var bmr=p.gender==='male'?10*p.w+6.25*p.h-5*p.age+5:10*p.w+6.25*p.h-5*p.age-161;
+  var t=Math.round(bmr*parseFloat(p.act));
+  if(p.goal==='deficit') t-=500;
+  if(p.goal==='surplus') t+=300;
+  return Math.max(t,1200);
+}
+function macros(cal){ return {p:Math.round(cal*.30/4),c:Math.round(cal*.45/4),f:Math.round(cal*.25/9)}; }
+
+/* ── SETUP ── */
+function updatePrev(){
+  var age=+$id('sage').value,h=+$id('sheight').value,w=+$id('sweight').value;
+  if(!age||!h||!w) return;
+  var cal=tdee({age:age,h:h,w:w,gender:$id('sgender').value,act:$id('sact').value,goal:$id('sgoal').value});
+  $id('prevn').textContent=cal; $id('prev').style.display='block';
+}
+['sage','sheight','sweight','sgender','sact','sgoal'].forEach(function(id){
+  var el=$id(id); if(!el)return;
+  el.addEventListener('input',updatePrev); el.addEventListener('change',updatePrev);
+});
+
+$id('startBtn').addEventListener('click',function(){
+  var age=+$id('sage').value,h=+$id('sheight').value,w=+$id('sweight').value;
+  if(!age||!h||!w){ toast('اكمل العمر والطول والوزن','er'); return; }
+  profile={age:age,h:h,w:w,gender:$id('sgender').value,act:$id('sact').value,goal:$id('sgoal').value};
+  profile.cal=tdee(profile);
+  sSet('gp',JSON.stringify(profile));
+  startApp();
+});
+
+/* ── LOAD TODAY'S LOG ── */
+function loadTodayLog(){
+  var saved=sGet('log_'+todayKey());
+  log = saved ? JSON.parse(saved) : [];
+}
+
+function saveTodayLog(){
+  sSet('log_'+todayKey(), JSON.stringify(log));
+}
+
+/* ── TABS ── */
+document.querySelectorAll('.tab').forEach(function(tab){
+  tab.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+    this.classList.add('active');
+    var which=this.dataset.tab;
+    $id('view-today').style.display = which==='today'?'block':'none';
+    $id('view-history').style.display = which==='history'?'block':'none';
+    if(which==='history') renderHistory();
+  });
+});
+
+/* ── SHOW APP ── */
+function startApp(){
+  $id('setup').style.display='none';
+  $id('app').style.display='block';
+  $id('hdate').textContent=new Date().toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  loadTodayLog();
+  setTimeout(function(){ initCharts(); render(); },120);
+}
+
+/* ── CHARTS ── */
+function initCharts(){
+  if(rChart){ rChart.destroy(); rChart=null; }
+  if(dChart){ dChart.destroy(); dChart=null; }
+  if(bChart){ bChart.destroy(); bChart=null; }
+  Chart.defaults.color='#7a8099';
+  Chart.defaults.font.family="'IBM Plex Sans Arabic',sans-serif";
+
+  rChart=new Chart($id('ringC').getContext('2d'),{
+    type:'doughnut',
+    data:{datasets:[{data:[0,1],backgroundColor:['#e8ff47','#1c2030'],borderWidth:0}]},
+    options:{cutout:'74%',plugins:{legend:{display:false},tooltip:{enabled:false}},events:[],animation:{duration:500}}
+  });
+
+  dChart=new Chart($id('donut').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:['بروتين','كارب','دهون'],datasets:[{data:[1,1,1],backgroundColor:['#ff6b35','#e8ff47','#00d4aa'],borderWidth:0}]},
+    options:{cutout:'60%',plugins:{legend:{position:'bottom',labels:{padding:10,font:{size:11}}},tooltip:{callbacks:{label:function(c){return ' '+c.label+': '+c.raw+'g';}}}},animation:{duration:400}}
+  });
+
+  var m=macros(profile.cal);
+  bChart=new Chart($id('bars').getContext('2d'),{
+    type:'bar',
+    data:{labels:['بروتين','كارب','دهون'],datasets:[
+      {label:'تناولت',data:[0,0,0],backgroundColor:['#ff6b35bb','#e8ff47bb','#00d4aabb'],borderRadius:6},
+      {label:'الهدف',data:[m.p,m.c,m.f],backgroundColor:['#ff6b3320','#e8ff4720','#00d4aa20'],borderRadius:6}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{padding:8,font:{size:10}}}},
+      scales:{y:{grid:{color:'#252a38'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:11}}}},
+      animation:{duration:300}}
+  });
+}
+
+/* ── RENDER TODAY ── */
+function render(){
+  var tot=log.reduce(function(a,b){return{cal:a.cal+b.cal,p:a.p+b.p,c:a.c+b.c,f:a.f+b.f};},{cal:0,p:0,c:0,f:0});
+  var goal=profile.cal, rem=goal-Math.round(tot.cal), m=macros(goal);
+
+  var pct=Math.min(tot.cal/goal,1);
+  rChart.data.datasets[0].data=[pct,1-pct];
+  rChart.data.datasets[0].backgroundColor[0]=tot.cal>goal?'#ff4466':'#e8ff47';
+  rChart.update('none');
+
+  var rn=$id('ringN'); rn.textContent=Math.round(tot.cal); rn.className='ring-n'+(tot.cal>goal?' over':'');
+  $id('ringR').textContent=Math.abs(rem)+(rem<0?' زيادة':'');
+
+  [{bar:'bP',v:'vP',t:'tP',val:tot.p,tgt:m.p},{bar:'bC',v:'vC',t:'tC',val:tot.c,tgt:m.c},{bar:'bF',v:'vF',t:'tF',val:tot.f,tgt:m.f}]
+  .forEach(function(b){
+    $id(b.bar).style.width=Math.min(b.val/(b.tgt||1)*100,100)+'%';
+    $id(b.v).textContent=Math.round(b.val)+'g';
+    $id(b.t).textContent=b.tgt+'g';
+  });
+
+  dChart.data.datasets[0].data=[Math.max(Math.round(tot.p),.1),Math.max(Math.round(tot.c),.1),Math.max(Math.round(tot.f),.1)];
+  dChart.update();
+  bChart.data.datasets[0].data=[Math.round(tot.p),Math.round(tot.c),Math.round(tot.f)];
+  bChart.data.datasets[1].data=[m.p,m.c,m.f];
+  bChart.update();
+
+  var el=$id('logEl');
+  if(!log.length){ el.innerHTML='<div class="log-empty">لسه ماضفتش حاجة 🍽️</div>'; return; }
+  el.innerHTML=log.map(function(item,i){
+    return '<div class="log-item">'
+      +'<div><div class="log-name">'+(item.emoji||'🍽️')+' '+item.name+' <span class="aib">AI</span>'
+      +(item.ql?' <span style="color:var(--mu);font-size:.72rem">'+item.ql+'</span>':'')+'</div>'
+      +'<div class="log-mac">ب'+Math.round(item.p)+'g · ك'+Math.round(item.c)+'g · د'+Math.round(item.f)+'g</div></div>'
+      +'<div class="log-r"><div class="log-cal">'+Math.round(item.cal)+'</div>'
+      +'<button class="log-del" data-i="'+i+'">✕</button></div></div>';
+  }).join('');
+
+  el.querySelectorAll('.log-del').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      log.splice(+this.getAttribute('data-i'),1);
+      saveTodayLog(); render();
+    });
+  });
+}
+
+/* ── RENDER HISTORY ── */
+function renderHistory(){
+  var el=$id('histEl');
+  // collect all log keys
+  var days=[];
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(k && k.indexOf('log_')===0) days.push(k.replace('log_',''));
+    }
+  }catch(e){}
+
+  if(!days.length){ el.innerHTML='<div class="log-empty">لسه مفيش تاريخ 📅</div>'; return; }
+
+  // sort descending
+  days.sort(function(a,b){ return new Date(b)-new Date(a); });
+
+  var m=macros(profile.cal);
+  el.innerHTML='';
+  days.forEach(function(day){
+    var dayLog=JSON.parse(sGet('log_'+day)||'[]');
+    var tot=dayLog.reduce(function(a,b){return{cal:a.cal+b.cal,p:a.p+b.p,c:a.c+b.c,f:a.f+b.f};},{cal:0,p:0,c:0,f:0});
+    var d=new Date(day);
+    var dateStr=d.toLocaleDateString('ar-EG',{weekday:'long',month:'long',day:'numeric'});
+    var isToday=day===todayKey();
+
+    var pctP=Math.min(tot.p/m.p*100,100), pctC=Math.min(tot.c/m.c*100,100), pctF=Math.min(tot.f/m.f*100,100);
+    var overGoal=tot.cal>profile.cal;
+
+    var div=document.createElement('div');
+    div.className='hist-day';
+    div.innerHTML=
+      '<div class="hist-day-hdr">'
+      +'<div class="hist-day-date">'+(isToday?'🟢 ':'')+dateStr+'</div>'
+      +'<div class="hist-day-cal" style="color:'+(overGoal?'var(--rd)':'var(--ac)')+'">'+Math.round(tot.cal)+' سعر</div>'
+      +'</div>'
+      +'<div class="hist-bars">'
+      +'<div class="hist-bar-w"><div class="hist-bar-lbl">بروتين '+Math.round(tot.p)+'g</div><div class="hist-bar-track"><div class="hist-bar-fill" style="width:'+pctP+'%;background:#ff6b35"></div></div></div>'
+      +'<div class="hist-bar-w"><div class="hist-bar-lbl">كارب '+Math.round(tot.c)+'g</div><div class="hist-bar-track"><div class="hist-bar-fill" style="width:'+pctC+'%;background:#e8ff47"></div></div></div>'
+      +'<div class="hist-bar-w"><div class="hist-bar-lbl">دهون '+Math.round(tot.f)+'g</div><div class="hist-bar-track"><div class="hist-bar-fill" style="width:'+pctF+'%;background:#00d4aa"></div></div></div>'
+      +'</div>'
+      +'<button class="hist-toggle" data-day="'+day+'">▾ عرض الوجبات ('+dayLog.length+')</button>'
+      +'<div class="hist-day-items" id="items_'+day+'" style="display:none">'
+      +dayLog.map(function(it){ return (it.emoji||'🍽️')+' '+it.name+' — '+Math.round(it.cal)+' سعر'; }).join('<br>')
+      +'</div>';
+
+    div.querySelector('.hist-toggle').addEventListener('click',function(){
+      var key=this.getAttribute('data-day');
+      var items=$id('items_'+key);
+      var shown=items.style.display!=='none';
+      items.style.display=shown?'none':'block';
+      this.textContent=(shown?'▾':'▴')+' '+(shown?'عرض':'إخفاء')+' الوجبات ('+dayLog.length+')';
+    });
+
+    el.appendChild(div);
+  });
+}
+
+/* ── AI MODAL ── */
+$id('aiBtn').addEventListener('click',function(){
+  $id('aiTxt').value='';
+  $id('spinW').style.display='none';
+  $id('aiRes').style.display='none';
+  $id('addBtn').style.display='none';
+  $id('resList').innerHTML='';
+  aiItems=[];
+  $id('modal').classList.add('on');
+  setTimeout(function(){ $id('aiTxt').focus(); },150);
+});
+$id('closeBtn').addEventListener('click',function(){ $id('modal').classList.remove('on'); });
+$id('modal').addEventListener('click',function(e){ if(e.target===this) this.classList.remove('on'); });
+$id('sendBtn').addEventListener('click',runAI);
+$id('aiTxt').addEventListener('keydown',function(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); runAI(); } });
+
+async function runAI(){
+  var txt=$id('aiTxt').value.trim();
+  if(!txt){ toast('اكتب الأكل الأول','er'); return; }
+  $id('sendBtn').disabled=true;
+  $id('spinW').style.display='block';
+  $id('aiRes').style.display='none';
+  $id('addBtn').style.display='none';
+
+  var prompt='أنت خبير تغذية متخصص في الأكل المصري والعربي.\nالمستخدم وصف وجبته: "'+txt+'"\n\nحلل كل أكل أو مشروب وقدّر سعراته ومغذياته بدقة.\nأرجع JSON فقط بدون أي كلام:\n{"items":[{"name":"اسم","emoji":"🍽️","qty_label":"الكمية","calories":0,"protein":0,"carbs":0,"fat":0,"note":""}],"meal_assessment":"تقييم"}\n- استخدم الحصة المعتادة لو الكمية مش محددة\n- كل عنصر منفصل';
+
+  try{
+    var res=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+OR_KEY},
+      body:JSON.stringify({model:'meta-llama/llama-3.1-8b-instruct:free',messages:[{role:'user',content:prompt}]})
+    });
+    var data=await res.json();
+    if(data.error) throw new Error(data.error.message||'API error');
+    var raw=data.choices[0].message.content.trim();
+    var parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    showResults(parsed);
+  }catch(err){
+    toast('مش قادر يتصل بالـ AI','er');
+    console.error(err);
+  }finally{
+    $id('sendBtn').disabled=false;
+    $id('spinW').style.display='none';
+  }
+}
+
+function showResults(parsed){
+  aiItems=parsed.items||[];
+  var list=$id('resList'); list.innerHTML='';
+  aiItems.forEach(function(item,i){
+    var d=document.createElement('div');
+    d.className='ri sel'; d.dataset.i=i;
+    d.innerHTML='<div class="chk">✓</div>'
+      +'<div style="flex:1"><div style="font-size:.9rem;font-weight:600">'+(item.emoji||'🍽️')+' '+item.name
+      +' <span style="font-weight:400;color:var(--mu);font-size:.78rem">('+item.qty_label+')</span></div>'
+      +'<div style="font-size:.7rem;color:var(--mu);margin-top:2px">ب'+item.protein+'g · ك'+item.carbs+'g · د'+item.fat+'g'+(item.note?' · '+item.note:'')+'</div></div>'
+      +'<div style="font-size:.93rem;font-weight:700;color:var(--ac);flex-shrink:0">'+item.calories+'</div>';
+    d.addEventListener('click',function(){ this.classList.toggle('sel'); });
+    list.appendChild(d);
+  });
+  if(parsed.meal_assessment){
+    var a=document.createElement('div');
+    a.style.cssText='background:var(--s2);border-radius:9px;padding:.7rem .95rem;margin-top:.65rem;font-size:.8rem;color:var(--mu);border-right:3px solid var(--ac3)';
+    a.textContent='💡 '+parsed.meal_assessment;
+    list.appendChild(a);
+  }
+  $id('aiRes').style.display='block';
+  $id('addBtn').style.display='block';
+}
+
+$id('addBtn').addEventListener('click',function(){
+  var sel=document.querySelectorAll('#resList .ri.sel'), count=0;
+  sel.forEach(function(el){
+    var item=aiItems[+el.dataset.i]; if(!item)return;
+    log.push({id:Date.now()+count,name:item.name,emoji:item.emoji||'🍽️',ql:item.qty_label,cal:item.calories,p:item.protein,c:item.carbs,f:item.fat});
+    count++;
+  });
+  saveTodayLog();
+  $id('modal').classList.remove('on');
+  render();
+  toast('✓ أضفت '+count+' أكلة');
+});
+
+/* ── RESET ── */
+$id('resetBtn').addEventListener('click',function(){
+  if(confirm('إعادة ضبط كل البيانات؟')){ sClear(); location.reload(); }
+});
+
+/* ── INIT ── */
+var saved=sGet('gp');
+if(saved){ try{ profile=JSON.parse(saved); startApp(); }catch(e){ sClear(); } }
+
+})();
+</script>
+</body>
+</html>
